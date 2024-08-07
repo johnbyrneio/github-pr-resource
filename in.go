@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 // Get (business logic)
 func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResponse, error) {
 	if request.Params.SkipDownload {
+		log.Print("`skip_download` has been deprecated, use `no_get` instead to prevent this implicit get step from running.")
 		return &GetResponse{Version: request.Version}, nil
 	}
 

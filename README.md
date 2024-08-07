@@ -88,7 +88,7 @@ generate notifications over the webhook. So if you have a repository with little
 
 | Parameter            | Required | Example  | Description                                                                        |
 |----------------------|----------|----------|------------------------------------------------------------------------------------|
-| `skip_download`      | No       | `true`   | Use with `get_params` in a `put` step to do nothing on the implicit get.           |
+| `skip_download`      | No       | `true`   | (deprecated) Use `no_get` on the put step instead.                                 |
 | `integration_tool`   | No       | `rebase` | The integration tool to use, `merge`, `rebase` or `checkout`. Defaults to `merge`. |
 | `git_depth`          | No       | `1`      | Shallow clone the repository using the `--depth` Git option                        |
 | `submodules`         | No       | `true`   | Recursively clone git submodules. Defaults to false.                               |
@@ -128,21 +128,6 @@ is available as `.git/resource/base_sha`. For a complete list of available (indi
 - `state`: the state of the pull request, e.g. `OPEN`
 - `title`: the title of the pull request
 - `url`: the URL for the pull request
-
-
-When specifying `skip_download` the pull request volume mounted to subsequent tasks will be empty, which is a problem
-when you set e.g. the pending status before running the actual tests. The workaround for this is to use an alias for
-the `put` (see telia-oss/github-pr-resource#32 for more details).
-Example here:
-
-```yaml
-put: update-status <-- Use an alias for the pull-request resource
-resource: pull-request
-params:
-    path: pull-request
-    status: pending
-get_params: {skip_download: true}
-```
 
 git-crypt encrypted repositories will automatically be decrypted when the `git_crypt_key` is set in the source configuration.
 
