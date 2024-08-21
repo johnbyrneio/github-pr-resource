@@ -69,7 +69,7 @@ func NewGithubClient(s *Source) (*GithubClient, error) {
 	}
 
 	if s.AppID != 0 && s.InstallationID != 0 && s.PrivateKey != "" {
-		installationTokenSource, err := GenerateInstallationToken(s)
+		installationTokenSource, err := GenInstallTokenSource(s)
 		if err != nil {
 			return nil, err
 		}
@@ -113,7 +113,8 @@ func NewGithubClient(s *Source) (*GithubClient, error) {
 }
 
 // GenerateInstallationToken generates an installation token for a GitHub App installation.
-func GenerateInstallationToken(s *Source) (oauth2.TokenSource, error) {
+// Used for API calls
+func GenInstallTokenSource(s *Source) (oauth2.TokenSource, error) {
 	privateKey := []byte(s.PrivateKey)
 	appID := s.AppID
 	installationID := s.InstallationID
@@ -126,6 +127,22 @@ func GenerateInstallationToken(s *Source) (oauth2.TokenSource, error) {
 	installationTokenSource := githubauth.NewInstallationTokenSource(installationID, appTokenSource)
 
 	return installationTokenSource, nil
+}
+
+// GenInstallToken generates an installation token for a GitHub App installation.
+// Used for git push/pull
+func GenInstallToken(s *Source) (*oauth2.Token, error) {
+	installationTokenSource, err := GenInstallTokenSource(s)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := installationTokenSource.Token()
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }
 
 // ListPullRequests gets the last commit on all pull requests with the matching state.

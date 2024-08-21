@@ -35,8 +35,20 @@ func NewGitClient(source *Source, dir string, output io.Writer) (*GitClient, err
 	if source.DisableGitLFS {
 		os.Setenv("GIT_LFS_SKIP_SMUDGE", "true")
 	}
+	var accessToken string
+	if source.AccessToken != "" {
+		accessToken = source.AccessToken
+	}
+	if source.AccessToken == "" {
+		oauth2Token, err := GenInstallToken(source)
+		if err != nil {
+			return nil, err
+		}
+		accessToken = oauth2Token.AccessToken
+	}
+
 	return &GitClient{
-		AccessToken: source.AccessToken,
+		AccessToken: accessToken,
 		Directory:   dir,
 		Output:      output,
 	}, nil
