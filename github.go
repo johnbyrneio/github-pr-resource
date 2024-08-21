@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/google/go-github/v63/github"
+	"github.com/jferrl/go-githubauth"
 	"github.com/shurcooL/githubv4"
 	"golang.org/x/oauth2"
 )
@@ -60,9 +61,20 @@ func NewGithubClient(s *Source) (*GithubClient, error) {
 		ctx = context.TODO()
 	}
 
-	client := oauth2.NewClient(ctx, oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: s.AccessToken},
-	))
+	var client *http.Client
+	if s.AccessToken != "" {
+		client = oauth2.NewClient(ctx, oauth2.StaticTokenSource(
+			&oauth2.Token{AccessToken: s.AccessToken},
+		))
+	}
+
+	if s.AppID != 0 && s.InstallationID != 0 && s.PrivateKey != "" {
+		installationTokenSource, err := GenerateInstallationToken(s)
+		if err != nil {
+			return nil, err
+		}
+		client = oauth2.NewClient(ctx, installationTokenSource)
+	}
 
 	var v3 *github.Client
 	if s.V3Endpoint != "" {
@@ -98,6 +110,22 @@ func NewGithubClient(s *Source) (*GithubClient, error) {
 		Owner:      owner,
 		Repository: repository,
 	}, nil
+}
+
+// GenerateInstallationToken generates an installation token for a GitHub App installation.
+func GenerateInstallationToken(s *Source) (oauth2.TokenSource, error) {
+	privateKey := []byte(s.PrivateKey)
+	appID := s.AppID
+	installationID := s.InstallationID
+
+	appTokenSource, err := githubauth.NewApplicationTokenSource(appID, privateKey)
+	if err != nil {
+		return nil, fmt.Errorf("error creating application token source: %s", err)
+	}
+
+	installationTokenSource := githubauth.NewInstallationTokenSource(installationID, appTokenSource)
+
+	return installationTokenSource, nil
 }
 
 // ListPullRequests gets the last commit on all pull requests with the matching state.
